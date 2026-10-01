@@ -1,0 +1,95 @@
+{
+  "rules": {
+    "users": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": false
+      }
+    },
+    "shelves": {
+      ".read": "auth != null",
+      "$shelfId": {
+        ".write": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'gerente'",
+        "name": {
+          ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 80"
+        },
+        "productType": {
+          ".validate": "newData.isString() && newData.val().length <= 120"
+        },
+        "unitWeightKg": {
+          ".validate": "newData.isNumber() && newData.val() > 0"
+        },
+        "toleranceFraction": {
+          ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 1"
+        },
+        "capacityUnits": {
+          ".validate": "newData.isNumber() && newData.val() >= 1"
+        },
+        "currentWeightKg": {
+          ".write": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'dispositivo' && data.parent().exists()",
+          ".validate": "newData.isNumber() && newData.val() >= 0"
+        },
+        "updatedAt": {
+          ".write": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'dispositivo' && data.parent().exists()",
+          ".validate": "newData.isNumber() && newData.val() <= now + 60000"
+        },
+        "availableUnits": {
+          ".write": "auth != null && (root.child('users').child(auth.uid).child('role').val() === 'gerente' || root.child('users').child(auth.uid).child('role').val() === 'repositor' || root.child('users').child(auth.uid).child('role').val() === 'dispositivo') && data.parent().exists()",
+          ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() % 1 === 0"
+        },
+        "$other": {
+          ".validate": false
+        }
+      }
+    },
+    "shelfStatus": {
+      ".read": "auth != null && (root.child('users').child(auth.uid).child('role').val() === 'gerente' || root.child('users').child(auth.uid).child('role').val() === 'repositor')",
+      "$shelfId": {
+        ".write": "auth != null && (root.child('users').child(auth.uid).child('role').val() === 'gerente' || root.child('users').child(auth.uid).child('role').val() === 'repositor')",
+        ".validate": "!newData.exists() || newData.hasChildren(['stockStatus', 'anomaly'])"
+      }
+    },
+    "history": {
+      ".read": "auth != null",
+      ".indexOn": [
+        "timestamp"
+      ],
+      "$entryId": {
+        ".write": "auth != null && !data.exists() && newData.exists() && (root.child('users').child(auth.uid).child('role').val() === 'gerente' || root.child('users').child(auth.uid).child('role').val() === 'repositor')",
+        ".validate": "newData.hasChildren(['shelfId', 'type', 'timestamp'])",
+        "type": {
+          ".validate": "newData.val() === 'aviso' || newData.val() === 'critico' || newData.val() === 'normalizado' || newData.val() === 'produto_estranho' || newData.val() === 'produto_estranho_resolvido'"
+        },
+        "timestamp": {
+          ".validate": "newData.isNumber() && newData.val() <= now + 60000"
+        }
+      }
+    },
+    "movements": {
+      ".read": "auth != null",
+      ".indexOn": [
+        "timestamp",
+        "shelfId"
+      ],
+      "$movementId": {
+        ".write": "auth != null && !data.exists() && newData.exists() && (root.child('users').child(auth.uid).child('role').val() === 'gerente' || root.child('users').child(auth.uid).child('role').val() === 'repositor')",
+        ".validate": "newData.hasChildren(['shelfId', 'type', 'delta', 'fromUnits', 'toUnits', 'timestamp'])",
+        "type": {
+          ".validate": "newData.val() === 'entrada' || newData.val() === 'saida'"
+        },
+        "delta": {
+          ".validate": "newData.isNumber() && newData.val() !== 0"
+        },
+        "fromUnits": {
+          ".validate": "newData.isNumber() && newData.val() >= 0"
+        },
+        "toUnits": {
+          ".validate": "newData.isNumber() && newData.val() >= 0"
+        },
+        "timestamp": {
+          ".validate": "newData.isNumber() && newData.val() <= now + 60000"
+        }
+      }
+    }
+  }
+}

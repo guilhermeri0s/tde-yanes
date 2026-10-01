@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Painel de Reposição</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #F1F2F4; --surface: #FFFFFF; --ink: #1C2024; --ink-soft: #5B6169; --line: #DADDE1;
+      --accent: #2B5FD9; --accent-hover: #254FB8; --track: #E7E9EC;
+      --ok: #1F8A4C;   --ok-bg: #E7F5EC;
+      --warn: #B5720B; --warn-bg: #FBF0DC;
+      --crit: #C23B3B; --crit-bg: #FBE7E7;
+      --anom: #7A4FC7; --anom-bg: #F1EAFB;
+      --radius: 10px;
+      --font-d: 'Barlow Condensed', sans-serif;
+      --font-b: 'Inter', sans-serif;
+    }
+
+    /* ---------- base ---------- */
+    * { box-sizing: border-box; }
+    html, body { height: 100%; margin: 0; }
+    body { font-family: var(--font-b); background: var(--bg); color: var(--ink); -webkit-font-smoothing: antialiased; }
+    button, input, select { font-family: inherit; }
+    button { cursor: pointer; }
+    button:disabled { opacity: .6; cursor: default; }
+    :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    h1, h2, h3 { font-family: var(--font-d); font-weight: 700; margin: 0; letter-spacing: .2px; }
+    .hidden { display: none !important; }
+    .muted { color: var(--ink-soft); }
+    .small { font-size: 12.5px; }
+
+    /* cores por status: definem --c / --cb, herdadas por badge, dot, slot e barra */
+    .ok, .entrada  { --c: var(--ok);   --cb: var(--ok-bg); }
+    .aviso         { --c: var(--warn); --cb: var(--warn-bg); }
+    .critico, .saida { --c: var(--crit); --cb: var(--crit-bg); }
+    .anom          { --c: var(--anom); --cb: var(--anom-bg); }
+    .badge { font-size: 11.5px; font-weight: 600; padding: 3px 8px; border-radius: 100px; background: var(--cb); color: var(--c); }
+    .tone { color: var(--c); font-weight: 600; }
+
+    /* ---------- campos e botões ---------- */
+    .field { margin-bottom: 16px; }
+    .field label { display: block; font-size: 13px; color: var(--ink-soft); margin-bottom: 6px; }
+    .field input { width: 100%; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; font-size: 15px; background: #fff; color: var(--ink); }
+    .field input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+    .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; }
+    .btn { padding: 9px 16px; border-radius: 8px; border: 1px solid var(--line); background: #fff; font-size: 14px; font-weight: 600; color: var(--ink); }
+    .btn:hover:not(:disabled) { background: #F4F5F6; }
+    .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .btn.primary:hover:not(:disabled) { background: var(--accent-hover); }
+    .btn.danger { color: var(--crit); border-color: #F0C9C9; }
+    .btn.danger:hover:not(:disabled) { background: var(--crit-bg); }
+    .btn.block { width: 100%; padding: 11px; font-size: 15px; }
+
+    /* ---------- login ---------- */
+    #login-screen { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; }
+    .login-card { width: 100%; max-width: 360px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 32px 28px; }
+    .login-card h1 { font-size: 30px; line-height: 1.1; margin-bottom: 4px; }
+    .login-card .sub { font-size: 14px; margin: 0 0 24px; }
+    #login-error { color: var(--crit); font-size: 13px; margin-top: 10px; min-height: 16px; }
+
+    /* ---------- estrutura ---------- */
+    #app { display: flex; min-height: 100vh; }
+    .sidebar { width: 210px; flex-shrink: 0; background: var(--ink); color: #fff; padding: 22px 14px; display: flex; flex-direction: column; }
+    .brand { font-family: var(--font-d); font-size: 22px; font-weight: 700; padding: 0 8px 22px; }
+    .brand span { color: #8FB0FF; }
+    .nav-btn { display: block; width: 100%; text-align: left; background: none; border: none; color: #C7CBD1; font-size: 15px; padding: 10px; border-radius: 8px; margin-bottom: 2px; }
+    .nav-btn:hover { background: #262A31; color: #fff; }
+    .nav-btn.active { background: #2A2F37; color: #fff; }
+    .spacer { flex: 1; }
+    .who { font-size: 12px; color: #8B9099; padding: 0 10px 8px; line-height: 1.5; white-space: pre-line; }
+    .btn-logout { background: none; border: 1px solid #3A3F47; color: #C7CBD1; border-radius: 8px; padding: 8px 10px; font-size: 13px; width: 100%; }
+    .btn-logout:hover { border-color: var(--ink-soft); color: #fff; }
+
+    .main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+    .topbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 18px 28px; border-bottom: 1px solid var(--line); background: var(--surface); }
+    .topbar h2 { font-size: 26px; }
+    .topbar-meta { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; justify-content: flex-end; font-size: 14px; }
+    .conn { --c: var(--ok); font-size: 12.5px; color: var(--c); display: inline-flex; align-items: center; gap: 6px; }
+    .conn::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+    .conn.offline { --c: var(--warn); }
+    .content { padding: 24px 28px 48px; flex: 1; }
+    .count-label { display: block; font-size: 14px; margin-bottom: 18px; }
+    .empty-state { border: 1px dashed var(--line); border-radius: var(--radius); padding: 40px 20px; text-align: center; color: var(--ink-soft); }
+    .panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 20px; margin-bottom: 20px; }
+    .panel h3 { font-size: 19px; margin-bottom: 14px; }
+
+    /* ---------- cards de prateleira ---------- */
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 14px; }
+    .shelf-card { position: relative; width: 100%; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px 16px 14px 22px; overflow: hidden; text-align: left; display: flex; flex-direction: column; gap: 10px; }
+    .shelf-card::before { content: ""; position: absolute; inset: 0 auto 0 0; width: 5px; background: var(--c); }
+    .shelf-card .name { font-family: var(--font-d); font-size: 20px; font-weight: 600; }
+    .shelf-card .small { margin-top: -6px; }
+    .count-row { display: flex; align-items: baseline; gap: 6px; font-size: 14px; }
+    .count-row b { font-family: var(--font-d); font-size: 34px; line-height: 1; }
+    .slots { display: flex; gap: 2px; flex-wrap: wrap; }
+    .slot { flex: 1; min-width: 4px; height: 16px; border-radius: 2px; background: var(--track); }
+    .slot.filled, .fillbar > div { background: var(--c); }
+    .fillbar { height: 10px; border-radius: 5px; background: var(--track); overflow: hidden; }
+    .fillbar > div { height: 100%; }
+    .badges { display: flex; gap: 6px; flex-wrap: wrap; }
+
+    /* ---------- listas e tabelas ---------- */
+    .list-row { display: flex; align-items: center; gap: 14px; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; margin-bottom: 8px; cursor: pointer; }
+    .list-row .dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; background: var(--c); }
+    .list-row .txt { flex: 1; min-width: 0; }
+    .list-row .txt span { display: block; font-size: 13px; color: var(--ink-soft); margin-top: 2px; }
+    .list-row .when { white-space: nowrap; }
+    .filters { display: flex; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
+    .filters select { padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: #fff; font-size: 13.5px; }
+    .summary { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
+    .summary div { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 10px 14px; min-width: 120px; font-size: 12.5px; color: var(--ink-soft); }
+    .summary b { display: block; font-family: var(--font-d); font-size: 24px; line-height: 1.1; color: var(--c, var(--ink)); }
+    .table-wrap { overflow-x: auto; border-radius: var(--radius); }
+    table { width: 100%; border-collapse: collapse; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
+    th { text-align: left; font-size: 12px; color: var(--ink-soft); font-weight: 600; padding: 10px 14px; border-bottom: 1px solid var(--line); background: #FAFAFB; }
+    td { padding: 10px 14px; border-bottom: 1px solid var(--line); font-size: 14px; }
+    tr:last-child td { border-bottom: none; }
+
+    /* ---------- admin ---------- */
+    .admin-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+    .admin-row:last-child { border-bottom: none; }
+
+    /* ---------- modal ---------- */
+    #overlay { position: fixed; inset: 0; background: rgba(20, 22, 26, .5); display: flex; align-items: center; justify-content: center; padding: 20px; z-index: 50; }
+    .modal { width: 100%; max-width: 420px; background: var(--surface); border-radius: var(--radius); padding: 22px 22px 20px; max-height: 88vh; overflow: auto; }
+    .modal h3 { font-size: 22px; margin-bottom: 2px; }
+    .modal-sub { font-size: 13px; margin: 0 0 16px; }
+    .modal .row { display: flex; justify-content: space-between; gap: 10px; padding: 7px 0; border-bottom: 1px solid var(--line); font-size: 14px; }
+    .modal .row span:first-child { color: var(--ink-soft); }
+    .modal-close { float: right; background: none; border: none; font-size: 24px; color: var(--ink-soft); line-height: 1; padding: 0 4px; }
+    .actions { display: flex; gap: 8px; margin-top: 16px; flex-wrap: wrap; }
+
+    @media (max-width: 760px) {
+      #app { flex-direction: column; }
+      .sidebar { width: 100%; flex-direction: row; align-items: center; padding: 12px 14px; gap: 6px; overflow-x: auto; }
+      .brand { padding: 0 10px 0 0; }
+      .spacer, .who { display: none; }
+      .nav-btn, .btn-logout { width: auto; white-space: nowrap; margin-bottom: 0; }
+      .topbar { padding: 14px 16px; }
+      .content { padding: 16px 16px 40px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ===================== LOGIN ===================== -->
+  <div id="login-screen">
+    <form class="login-card" id="login-form" novalidate>
+      <h1>Painel de Reposição</h1>
+      <p class="sub muted">Entre com sua conta para acompanhar as prateleiras.</p>
+      <div class="field">
+        <label for="login-email">E-mail</label>
+        <input id="login-email" type="email" autocomplete="username" required>
+      </div>
+      <div class="field">
+        <label for="login-pass">Senha</label>
+        <input id="login-pass" type="password" autocomplete="current-password" required>
+      </div>
+      <button class="btn primary block" id="login-btn" type="submit">Entrar</button>
+      <div id="login-error" role="alert" aria-live="polite"></div>
+    </form>
+  </div>
+
+  <!-- ===================== APP ===================== -->
+  <div id="app" class="hidden">
+    <nav class="sidebar" aria-label="Navegação principal">
+      <div class="brand">reposi<span>ção</span></div>
+      <button type="button" class="nav-btn" data-view="shelves">Prateleiras</button>
+      <button type="button" class="nav-btn" data-view="alerts">Alertas</button>
+      <button type="button" class="nav-btn" data-view="movements">Movimentações</button>
+      <button type="button" class="nav-btn" data-view="history">Histórico</button>
+      <button type="button" class="nav-btn hidden" data-view="admin" id="nav-admin">Admin</button>
+      <div class="spacer"></div>
+      <div class="who" id="who-info"></div>
+      <button type="button" class="btn-logout" id="btn-logout">Sair</button>
+    </nav>
+
+    <main class="main">
+      <div class="topbar">
+        <h2 id="view-title"></h2>
+        <div class="topbar-meta">
+          <span class="conn" id="conn-status">Tempo real: conectando…</span>
+          <span class="muted" id="alert-pill" aria-live="polite"></span>
+        </div>
+      </div>
+
+      <div class="content">
+
+        <!-- Prateleiras -->
+        <section id="view-shelves" data-title="Prateleiras">
+          <span class="count-label muted" id="shelves-count"></span>
+          <div class="grid" id="shelves-grid"></div>
+        </section>
+
+        <!-- Alertas -->
+        <section id="view-alerts" data-title="Alertas" class="hidden">
+          <div id="alerts-list"></div>
+        </section>
+
+        <!-- Movimentações -->
+        <section id="view-movements" data-title="Movimentações" class="hidden">
+          <div class="filters">
+            <select id="mov-filter-shelf" data-all="Todos os produtos" aria-label="Filtrar por produto"></select>
+            <select id="mov-filter-type" aria-label="Filtrar por tipo de movimentação">
+              <option value="">Entradas e saídas</option>
+              <option value="entrada">Somente entradas</option>
+              <option value="saida">Somente saídas</option>
+            </select>
+          </div>
+          <div class="summary">
+            <div class="ok"><b id="mov-total-in">+0</b>unidades entraram</div>
+            <div class="critico"><b id="mov-total-out">−0</b>unidades saíram</div>
+            <div><b id="mov-count">0</b>movimentações</div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Quando</th><th>Produto</th><th>Tipo</th><th>Quantidade</th><th>Estoque</th><th>Peso</th></tr></thead>
+              <tbody id="movements-body"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- Histórico -->
+        <section id="view-history" data-title="Histórico" class="hidden">
+          <div class="filters">
+            <select id="hist-filter-shelf" data-all="Todas as prateleiras" aria-label="Filtrar por prateleira"></select>
+            <select id="hist-filter-type" aria-label="Filtrar por tipo de evento">
+              <option value="">Todos os tipos</option>
+              <option value="aviso">Aviso de reposição</option>
+              <option value="critico">Reposição crítica</option>
+              <option value="normalizado">Normalizado</option>
+              <option value="produto_estranho">Produto estranho</option>
+              <option value="produto_estranho_resolvido">Produto estranho resolvido</option>
+            </select>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Quando</th><th>Prateleira</th><th>Evento</th><th>Peso</th><th>Ocupação</th></tr></thead>
+              <tbody id="history-body"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- Admin -->
+        <section id="view-admin" data-title="Administração" class="hidden">
+          <div class="panel">
+            <h3>Nova prateleira</h3>
+            <form id="new-shelf-form">
+              <div class="form-grid">
+                <div class="field"><label for="ns-name">Nome</label><input id="ns-name" name="name" required placeholder="Leites"></div>
+                <div class="field"><label for="ns-type">Tipo de produto</label><input id="ns-type" name="productType" required placeholder="Leite integral 1L"></div>
+                <div class="field"><label for="ns-unitw">Peso unitário (kg)</label><input id="ns-unitw" name="unitWeightKg" type="number" step="0.001" min="0.001" value="1.03" required></div>
+                <div class="field"><label for="ns-tol">Tolerância (%)</label><input id="ns-tol" name="tolerancePct" type="number" step="0.1" min="0" value="3" required></div>
+                <div class="field"><label for="ns-cap">Capacidade (unidades)</label><input id="ns-cap" name="capacityUnits" type="number" step="1" min="1" value="20" required></div>
+              </div>
+              <button class="btn primary" type="submit">Adicionar prateleira</button>
+            </form>
+          </div>
+          <div class="panel">
+            <h3>Prateleiras cadastradas</h3>
+            <div id="admin-shelf-list"></div>
+          </div>
+        </section>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- ===================== MODAL DETALHE ===================== -->
+  <div id="overlay" class="hidden">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-name">
+      <button type="button" class="modal-close" id="modal-close" aria-label="Fechar">&times;</button>
+      <h3 id="modal-name"></h3>
+      <p class="modal-sub muted" id="modal-type"></p>
+
+      <div class="row"><span>Status</span><span id="modal-status"></span></div>
+      <div class="row"><span>Estoque estimado</span><span id="modal-units"></span></div>
+      <div class="row"><span>Ocupação</span><span id="modal-occ"></span></div>
+      <div class="row"><span>Peso atual</span><span id="modal-weight"></span></div>
+      <div class="row"><span>Peso unitário / tolerância</span><span id="modal-unitw"></span></div>
+      <div class="row"><span>Última leitura</span><span id="modal-updated"></span></div>
+
+      <div id="modal-gerente-tools" class="hidden">
+        <div class="form-grid" style="margin-top: 16px;">
+          <div class="field"><label for="edit-name">Nome</label><input id="edit-name"></div>
+          <div class="field"><label for="edit-type">Tipo de produto</label><input id="edit-type"></div>
+          <div class="field"><label for="edit-unitw">Peso unitário (kg)</label><input id="edit-unitw" type="number" step="0.001"></div>
+          <div class="field"><label for="edit-tol">Tolerância (%)</label><input id="edit-tol" type="number" step="0.1"></div>
+          <div class="field"><label for="edit-cap">Capacidade</label><input id="edit-cap" type="number" step="1"></div>
+          <div class="field"><label for="edit-weight">Peso atual — teste manual (kg)</label><input id="edit-weight" type="number" step="0.01"></div>
+        </div>
+        <div class="actions">
+          <button type="button" class="btn primary" id="btn-save-shelf">Salvar alterações</button>
+          <button type="button" class="btn danger" id="btn-delete-shelf">Remover prateleira</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
+    import {
+      getDatabase, ref, push, set, update, remove, get, onValue,
+      query, orderByChild, limitToLast, serverTimestamp, runTransaction
+    } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-database.js";
+
+    const app = initializeApp({
+      apiKey: "AIzaSyCOC1v63jSD0nChUSNnLNa5Qvw9TQUZzpk",
+      authDomain: "painel-reposicao.firebaseapp.com",
+      databaseURL: "https://painel-reposicao-default-rtdb.firebaseio.com",
+      projectId: "painel-reposicao",
+      storageBucket: "painel-reposicao.firebasestorage.app",
+      messagingSenderId: "1034735193406",
+      appId: "1:1034735193406:web:6ce25dad0fe02ca032306f"
+    });
+    const auth = getAuth(app);
+    const db = getDatabase(app);
+
+    // ---------- constantes ----------
+    const STATUS_LABEL = { ok: 'Normal', aviso: 'Aviso de reposição', critico: 'Reposição crítica' };
+    const HISTORY_LABEL = {
+      ...STATUS_LABEL, normalizado: 'Normalizado',
+      produto_estranho: 'Produto estranho detectado', produto_estranho_resolvido: 'Produto estranho resolvido'
+    };
+    const BAD_CREDENTIALS = ['invalid-credential', 'invalid-login-credentials', 'wrong-password', 'user-not-found'];
+    const LOGIN_ERRORS = {
+      'invalid-email': 'E-mail inválido.',
+      'too-many-requests': 'Muitas tentativas. Aguarde alguns minutos.',
+      'network-request-failed': 'Sem conexão com o servidor de login.',
+      'user-disabled': 'Este usuário está desativado.'
+    };
+    const EDIT_FIELDS = { name: 'edit-name', productType: 'edit-type', unitWeightKg: 'edit-unitw', tolerancePct: 'edit-tol', capacityUnits: 'edit-cap' };
+
+    // ---------- estado ----------
+    const shelvesCache = new Map();
+    let currentRole = null;
+    let activeShelfId = null;
+    let historyCache = [];
+    let movementsCache = [];
+    let unsubscribers = [];
+
+    // ---------- utilidades ----------
+    const $ = (id) => document.getElementById(id);
+    const on = (id, event, handler) => $(id).addEventListener(event, handler);
+    const toggle = (id, visible) => $(id).classList.toggle('hidden', !visible);
+    const escapeHtml = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    const fmtPct = (p) => Math.round(p * 100) + '%';
+    const fmtKg = (k) => (Number(k) || 0).toFixed(2) + ' kg';
+    const fmtWhen = (ts) => ts ? new Date(ts).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : '—';
+    const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
+    const sortedShelves = () => [...shelvesCache.values()].sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+    const hasAlert = (s) => s.derived.stockStatus !== 'ok' || s.derived.anomaly;
+    const statusBadges = (d) => `<span class="badge ${d.stockStatus}">${STATUS_LABEL[d.stockStatus]}</span>`
+      + (d.anomaly ? ' <span class="badge anom">Produto estranho</span>' : '');
+
+    function computeDerived(shelf) {
+      const unitW = Number(shelf.unitWeightKg) || 0;
+      const tol = shelf.toleranceFraction ?? 0.03;
+      const cap = Number(shelf.capacityUnits) || 0;
+      const w = Number(shelf.currentWeightKg) || 0;
+      const units = unitW > 0 ? Math.max(0, Math.round(w / unitW)) : 0;
+      const anomaly = unitW > 0 && Math.abs(w - units * unitW) > unitW * tol && w > unitW * tol;
+      const occupancyPct = cap > 0 ? Math.min(1, units / cap) : 0;
+      const stockStatus = occupancyPct <= 0.25 ? 'critico' : occupancyPct <= 0.5 ? 'aviso' : 'ok';
+      return { units, occupancyPct, stockStatus, anomaly };
+    }
+
+    function shelfFields(read) {
+      return {
+        name: read('name').trim(),
+        productType: read('productType').trim(),
+        unitWeightKg: Number(read('unitWeightKg')),
+        toleranceFraction: Number(read('tolerancePct')) / 100,
+        capacityUnits: Number(read('capacityUnits'))
+      };
+    }
+
+    async function withButton(btn, errorMsg, action) {
+      btn.disabled = true;
+      try { await action(); }
+      catch (e) { console.error(e); alert(errorMsg); }
+      finally { btn.disabled = false; }
+    }
+
+    function renderRows(bodyId, rows, cols, emptyMsg, rowHtml) {
+      $(bodyId).innerHTML = rows.length
+        ? rows.map(rowHtml).join('')
+        : `<tr><td colspan="${cols}" class="muted">${emptyMsg}</td></tr>`;
+    }
+
+    function fillShelfSelect(id) {
+      const sel = $(id);
+      const current = sel.value;
+      sel.innerHTML = `<option value="">${sel.dataset.all}</option>`
+        + sortedShelves().map((s) => `<option value="${escapeHtml(s.id)}">${escapeHtml(s.name || '—')}</option>`).join('');
+      sel.value = current;
+    }
+
+    function filtered(list, shelfSelect, typeSelect) {
+      const shelfId = $(shelfSelect).value;
+      const type = $(typeSelect).value;
+      return list.filter((x) => (!shelfId || x.shelfId === shelfId) && (!type || x.type === type));
+    }
+
+    // ---------- login ----------
+    on('login-form', 'submit', async (e) => {
+      e.preventDefault();
+      const email = $('login-email').value.trim();
+      const pass = $('login-pass').value;
+      const btn = $('login-btn');
+      $('login-error').textContent = email && pass ? '' : 'Preencha e-mail e senha.';
+      if (!email || !pass) return;
+
+      btn.disabled = true;
+      btn.textContent = 'Entrando…';
+      try {
+        await signInWithEmailAndPassword(auth, email, pass);
+      } catch (err) {
+        const code = (err?.code || '').replace('auth/', '');
+        $('login-error').textContent = BAD_CREDENTIALS.includes(code)
+          ? 'E-mail ou senha incorretos.'
+          : LOGIN_ERRORS[code] || `Não foi possível entrar (${code || 'erro desconhecido'}).`;
+        console.error('Falha no login', err);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Entrar';
+      }
+    });
+
+    on('btn-logout', 'click', () => signOut(auth));
+
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        teardown();
+        toggle('login-screen', true);
+        toggle('app', false);
+        return;
+      }
+      const profile = await get(ref(db, 'users/' + user.uid)).then((s) => s.val()).catch(() => null);
+      if (!profile || !['gerente', 'repositor'].includes(profile.role)) {
+        $('login-error').textContent = 'Login sem acesso ao painel. Peça ao gerente para te cadastrar em "users".';
+        await signOut(auth);
+        return;
+      }
+      currentRole = profile.role;
+      $('who-info').textContent = `${profile.name || user.email}\n${currentRole === 'gerente' ? 'Gerente' : 'Repositor'}`;
+      toggle('nav-admin', currentRole === 'gerente');
+      $('login-pass').value = '';
+      $('login-error').textContent = '';
+      toggle('login-screen', false);
+      toggle('app', true);
+      showView('shelves');
+      startListeners();
+    });
+
+    function teardown() {
+      unsubscribers.forEach((unsub) => unsub());
+      unsubscribers = [];
+      closeModal();
+      shelvesCache.clear();
+      historyCache = [];
+      movementsCache = [];
+      currentRole = null;
+    }
+
+    // ---------- navegação ----------
+    document.querySelectorAll('.nav-btn').forEach((btn) => btn.addEventListener('click', () => showView(btn.dataset.view)));
+
+    function showView(name) {
+      document.querySelectorAll('.nav-btn').forEach((b) => b.classList.toggle('active', b.dataset.view === name));
+      document.querySelectorAll('.content > section').forEach((sec) => sec.classList.toggle('hidden', sec.id !== 'view-' + name));
+      $('view-title').textContent = $('view-' + name).dataset.title;
+    }
+
+    document.addEventListener('click', (e) => {
+      const target = e.target.closest('[data-open]');
+      if (target) openModal(target.dataset.open);
+    });
+
+    // ---------- tempo real ----------
+    function listenLog(path, limit, onData) {
+      return onValue(query(ref(db, path), orderByChild('timestamp'), limitToLast(limit)), (snap) => {
+        const list = [];
+        snap.forEach((child) => { list.push({ id: child.key, ...child.val() }); });
+        onData(list.reverse());
+      }, (err) => console.error(`Falha ao ler ${path}`, err));
+    }
+
+    function startListeners() {
+      unsubscribers = [
+        onValue(ref(db, 'shelves'), (snap) => {
+          shelvesCache.clear();
+          Object.entries(snap.val() || {}).forEach(([id, raw]) => {
+            const shelf = { id, ...raw };
+            const derived = computeDerived(shelf);
+            shelvesCache.set(id, { ...shelf, derived });
+            syncStatus(shelf, derived);
+          });
+          renderShelves();
+          renderAlerts();
+          renderAdminList();
+          fillShelfSelect('hist-filter-shelf');
+          fillShelfSelect('mov-filter-shelf');
+          if (activeShelfId) refreshModal();
+        }, (err) => console.error('Falha ao ler prateleiras', err)),
+
+        listenLog('history', 200, (list) => { historyCache = list; renderHistory(); }),
+        listenLog('movements', 500, (list) => { movementsCache = list; renderMovements(); }),
+
+        onValue(ref(db, '.info/connected'), (snap) => {
+          const online = snap.val() === true;
+          $('conn-status').textContent = online ? 'Tempo real: conectado' : 'Tempo real: reconectando…';
+          $('conn-status').classList.toggle('offline', !online);
+        })
+      ];
+    }
+
+    // ---------- registro de eventos (uma vez só, mesmo com vários painéis abertos) ----------
+    async function syncStatus(shelf, derived) {
+      if (shelf.availableUnits !== derived.units) {
+        update(ref(db, 'shelves/' + shelf.id), { availableUnits: derived.units })
+          .catch((e) => console.error('Falha ao salvar quantidade disponível', e));
+      }
+      const next = { stockStatus: derived.stockStatus, anomaly: derived.anomaly, units: derived.units };
+      let prev = null;
+      try {
+        const result = await runTransaction(ref(db, 'shelfStatus/' + shelf.id), (current) => {
+          prev = current;
+          const same = current && ['stockStatus', 'anomaly', 'units'].every((k) => current[k] === next[k]);
+          return same ? undefined : next;
+        }, { applyLocally: false });
+        if (!result.committed || !prev) return;
+
+        if (typeof prev.units === 'number' && prev.units !== next.units) {
+          const delta = next.units - prev.units;
+          await logEntry('movements', shelf, {
+            productType: shelf.productType || '', type: delta > 0 ? 'entrada' : 'saida',
+            delta, fromUnits: prev.units, toUnits: next.units
+          });
+        }
+        if (prev.stockStatus !== next.stockStatus) {
+          await logEntry('history', shelf, { type: next.stockStatus === 'ok' ? 'normalizado' : next.stockStatus, occupancyPct: derived.occupancyPct });
+        }
+        if (prev.anomaly !== next.anomaly) {
+          await logEntry('history', shelf, { type: next.anomaly ? 'produto_estranho' : 'produto_estranho_resolvido', occupancyPct: derived.occupancyPct });
+        }
+      } catch (e) {
+        console.error('Falha ao sincronizar status', e);
+      }
+    }
+
+    function logEntry(path, shelf, fields) {
+      return push(ref(db, path), {
+        shelfId: shelf.id,
+        shelfName: shelf.name || '',
+        weightKg: Number(shelf.currentWeightKg) || 0,
+        timestamp: serverTimestamp(),
+        ...fields
+      }).catch((e) => console.error(`Falha ao registrar em ${path}`, e));
+    }
+
+    // ---------- telas ----------
+    function renderShelves() {
+      const shelves = sortedShelves();
+      $('shelves-count').textContent = plural(shelves.length, 'prateleira cadastrada', 'prateleiras cadastradas');
+      $('shelves-grid').innerHTML = shelves.length
+        ? shelves.map(shelfCard).join('')
+        : '<div class="empty-state">Nenhuma prateleira cadastrada ainda.</div>';
+      const alerts = shelves.filter(hasAlert).length;
+      $('alert-pill').textContent = alerts ? plural(alerts, 'alerta ativo', 'alertas ativos') : 'Tudo normal';
+    }
+
+    function shelfCard(s) {
+      const d = s.derived;
+      const cap = Number(s.capacityUnits) || 0;
+      const fill = cap > 0 && cap <= 40
+        ? `<div class="slots">${Array.from({ length: cap }, (_, i) => `<div class="slot${i < d.units ? ' filled' : ''}"></div>`).join('')}</div>`
+        : `<div class="fillbar"><div style="width: ${fmtPct(d.occupancyPct)}"></div></div>`;
+      return `
+        <button type="button" class="shelf-card ${d.stockStatus}" data-open="${escapeHtml(s.id)}">
+          <div class="name">${escapeHtml(s.name || '—')}</div>
+          <div class="small muted">${escapeHtml(s.productType || '')}</div>
+          <div class="count-row"><b>${d.units}</b><span class="muted">/ ${cap} un · ${fmtPct(d.occupancyPct)}</span></div>
+          ${fill}
+          <div class="badges">${statusBadges(d)}</div>
+        </button>`;
+    }
+
+    function renderAlerts() {
+      const list = sortedShelves().filter(hasAlert).sort((a, b) => a.derived.occupancyPct - b.derived.occupancyPct);
+      $('alerts-list').innerHTML = list.length ? list.map((s) => {
+        const d = s.derived;
+        const label = d.anomaly
+          ? 'Produto estranho — peso não bate com unidades de ' + escapeHtml(s.productType || 'produto')
+          : STATUS_LABEL[d.stockStatus];
+        return `
+          <div class="list-row" data-open="${escapeHtml(s.id)}">
+            <div class="dot ${d.anomaly ? 'anom' : d.stockStatus}"></div>
+            <div class="txt">
+              <strong>${escapeHtml(s.name || '—')}</strong>
+              <span>${label} · ${d.units}/${escapeHtml(s.capacityUnits ?? 0)} un (${fmtPct(d.occupancyPct)})</span>
+            </div>
+            <div class="when small muted">${fmtWhen(s.updatedAt)}</div>
+          </div>`;
+      }).join('') : '<div class="empty-state">Nenhum alerta no momento. 👍</div>';
+    }
+
+    function renderHistory() {
+      renderRows('history-body', filtered(historyCache, 'hist-filter-shelf', 'hist-filter-type'), 5, 'Nenhum evento encontrado.', (h) => `
+        <tr>
+          <td>${fmtWhen(h.timestamp)}</td>
+          <td>${escapeHtml(h.shelfName || '—')}</td>
+          <td>${escapeHtml(HISTORY_LABEL[h.type] || h.type)}</td>
+          <td>${fmtKg(h.weightKg)}</td>
+          <td>${fmtPct(h.occupancyPct || 0)}</td>
+        </tr>`);
+    }
+
+    function renderMovements() {
+      const rows = filtered(movementsCache, 'mov-filter-shelf', 'mov-filter-type');
+      const deltas = rows.map((m) => Number(m.delta) || 0);
+      $('mov-total-in').textContent = '+' + deltas.filter((d) => d > 0).reduce((a, b) => a + b, 0);
+      $('mov-total-out').textContent = '−' + -deltas.filter((d) => d < 0).reduce((a, b) => a + b, 0);
+      $('mov-count').textContent = rows.length;
+      renderRows('movements-body', rows, 6, 'Nenhuma movimentação registrada.', (m) => {
+        const tone = m.delta > 0 ? 'entrada' : 'saida';
+        return `
+          <tr>
+            <td>${fmtWhen(m.timestamp)}</td>
+            <td>${escapeHtml(m.shelfName || '—')}<br><span class="small muted">${escapeHtml(m.productType || '')}</span></td>
+            <td><span class="badge ${tone}">${m.delta > 0 ? 'Entrada' : 'Saída'}</span></td>
+            <td class="tone ${tone}">${m.delta > 0 ? '+' : '−'}${Math.abs(m.delta)} un</td>
+            <td>${escapeHtml(m.fromUnits)} → ${escapeHtml(m.toUnits)}</td>
+            <td>${fmtKg(m.weightKg)}</td>
+          </tr>`;
+      });
+    }
+
+    ['hist-filter-shelf', 'hist-filter-type'].forEach((id) => on(id, 'change', renderHistory));
+    ['mov-filter-shelf', 'mov-filter-type'].forEach((id) => on(id, 'change', renderMovements));
+
+    // ---------- admin ----------
+    function renderAdminList() {
+      const shelves = sortedShelves();
+      $('admin-shelf-list').innerHTML = shelves.length ? shelves.map((s) => `
+        <div class="admin-row">
+          <div>
+            <strong>${escapeHtml(s.name || '—')}</strong>
+            <div class="small muted">${escapeHtml(s.productType || '')} · ${escapeHtml(s.unitWeightKg)} kg/un · cap. ${escapeHtml(s.capacityUnits)}</div>
+          </div>
+          <button type="button" class="btn" data-open="${escapeHtml(s.id)}">Abrir</button>
+        </div>`).join('') : '<p class="muted">Nenhuma prateleira ainda.</p>';
+    }
+
+    on('new-shelf-form', 'submit', (e) => {
+      e.preventDefault();
+      const form = e.target;
+      withButton(form.querySelector('[type="submit"]'), 'Não foi possível criar a prateleira. Confira suas permissões.', async () => {
+        await set(push(ref(db, 'shelves')), {
+          ...shelfFields((key) => form.elements[key].value),
+          currentWeightKg: 0,
+          updatedAt: serverTimestamp()
+        });
+        form.reset();
+      });
+    });
+
+    // ---------- modal ----------
+    function openModal(id) {
+      activeShelfId = id;
+      toggle('overlay', true);
+      toggle('modal-gerente-tools', currentRole === 'gerente');
+      refreshModal();
+      const s = shelvesCache.get(id);
+      if (s && currentRole === 'gerente') {
+        Object.entries(EDIT_FIELDS).forEach(([key, inputId]) => { $(inputId).value = s[key] ?? ''; });
+        $('edit-tol').value = Math.round((s.toleranceFraction || 0) * 10000) / 100;
+        $('edit-weight').value = s.currentWeightKg || 0;
+      }
+      $('modal-close').focus();
+    }
+
+    function closeModal() {
+      activeShelfId = null;
+      toggle('overlay', false);
+    }
+
+    function refreshModal() {
+      const s = shelvesCache.get(activeShelfId);
+      if (!s) return closeModal();
+      const d = s.derived;
+      $('modal-name').textContent = s.name || '—';
+      $('modal-type').textContent = s.productType || '';
+      $('modal-status').innerHTML = statusBadges(d);
+      $('modal-units').textContent = `${d.units} / ${s.capacityUnits} unidades`;
+      $('modal-occ').textContent = fmtPct(d.occupancyPct);
+      $('modal-weight').textContent = fmtKg(s.currentWeightKg);
+      $('modal-unitw').textContent = `${s.unitWeightKg} kg ± ${Math.round((s.toleranceFraction || 0) * 100)}%`;
+      $('modal-updated').textContent = fmtWhen(s.updatedAt);
+    }
+
+    on('modal-close', 'click', closeModal);
+    on('overlay', 'click', (e) => { if (e.target.id === 'overlay') closeModal(); });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && activeShelfId) closeModal(); });
+
+    on('btn-save-shelf', 'click', (e) => {
+      if (!activeShelfId) return;
+      withButton(e.currentTarget, 'Não foi possível salvar. Confira suas permissões.', () =>
+        update(ref(db, 'shelves/' + activeShelfId), {
+          ...shelfFields((key) => $(EDIT_FIELDS[key]).value),
+          currentWeightKg: Number($('edit-weight').value),
+          updatedAt: serverTimestamp()
+        }));
+    });
+
+    on('btn-delete-shelf', 'click', (e) => {
+      const id = activeShelfId;
+      if (!id || !confirm('Remover esta prateleira? Essa ação não pode ser desfeita.')) return;
+      withButton(e.currentTarget, 'Não foi possível remover. Confira suas permissões.', async () => {
+        await remove(ref(db, 'shelves/' + id));
+        await remove(ref(db, 'shelfStatus/' + id)).catch(() => {});
+        closeModal();
+      });
+    });
+  </script>
+</body>
+</html>
