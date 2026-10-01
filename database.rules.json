@@ -37,6 +37,12 @@
           ".write": "auth != null && (root.child('users').child(auth.uid).child('role').val() === 'gerente' || root.child('users').child(auth.uid).child('role').val() === 'repositor' || root.child('users').child(auth.uid).child('role').val() === 'dispositivo') && data.parent().exists()",
           ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() % 1 === 0"
         },
+        "minUnits": {
+          ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() % 1 === 0"
+        },
+        "criticalUnits": {
+          ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() % 1 === 0"
+        },
         "$other": {
           ".validate": false
         }

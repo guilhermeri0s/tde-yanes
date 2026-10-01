@@ -7,11 +7,32 @@
       "**/node_modules/**",
       "*.md",
       "*.py",
-      "*.png",
       "*.pdf",
       "*.rules",
       "database.rules.json",
-      "index (1).html"
+      "*.docx",
+      "balanca_inteligente.png",
+      "sistema_embarcado_balanca.png"
+    ],
+    "headers": [
+      {
+        "source": "**/*.html",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "no-cache"
+          }
+        ]
+      },
+      {
+        "source": "/",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "no-cache"
+          }
+        ]
+      }
     ]
   },
   "database": {

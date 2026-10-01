@@ -114,9 +114,6 @@
     .topbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 20px 32px 16px; background: var(--paper); border-bottom: 1px solid var(--line); }
     .topbar h2 { font-size: 28px; }
     .topbar-meta { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; justify-content: flex-end; font-size: 14px; }
-    .conn { --c: var(--ok); font-size: 13px; color: var(--c); display: inline-flex; align-items: center; gap: 7px; }
-    .conn::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
-    .conn.offline { --c: var(--warn); }
     .content { padding: 24px 32px 48px; flex: 1; }
     .count-label { display: block; font-size: 14px; margin-bottom: 16px; }
     .empty-state { border: 2px dashed var(--rail); border-radius: 6px; padding: 40px 20px; text-align: center; color: var(--ink-soft); }
@@ -173,6 +170,22 @@
     .modal-close { float: right; background: none; border: none; font-size: 26px; color: var(--ink-soft); line-height: 1; padding: 0 4px; }
     .actions { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
 
+    /* ---------- notificações ---------- */
+    .notif-btn { display: inline-flex; align-items: center; gap: 7px; padding: 7px 12px; border: 1px solid var(--line); border-radius: 4px; background: var(--paper); font-size: 13px; font-weight: 600; }
+    .notif-btn:hover { background: var(--shelf); }
+    .notif-btn svg { width: 17px; height: 17px; }
+    .notif-btn.on { border-color: var(--ok); color: var(--ok); }
+    #toasts { position: fixed; top: 14px; right: 14px; z-index: 80; display: flex; flex-direction: column; gap: 10px; width: min(370px, calc(100vw - 28px)); pointer-events: none; }
+    .toast { pointer-events: auto; display: grid; grid-template-columns: 38px 1fr auto; gap: 12px; align-items: start; padding: 12px 12px 12px 14px; border-radius: 14px; background: rgba(255, 255, 255, .97); box-shadow: 0 10px 30px rgba(31, 42, 36, .22); border: 1px solid var(--line); cursor: pointer; animation: toast-in .28s ease-out; }
+    .toast.leaving { animation: toast-out .22s ease-in forwards; }
+    .toast-icon { width: 38px; height: 38px; border-radius: 10px; background: var(--c); display: grid; place-items: center; color: #fff; font-weight: 800; font-size: 18px; font-family: var(--font-d); }
+    .toast-app { font-size: 12px; color: var(--ink-soft); display: flex; gap: 6px; }
+    .toast-title { font-weight: 700; font-size: 14.5px; margin-top: 1px; }
+    .toast-body { font-size: 13.5px; color: var(--ink-soft); margin-top: 1px; }
+    .toast-close { background: none; border: none; color: var(--ink-soft); font-size: 20px; line-height: 1; padding: 0 2px; }
+    @keyframes toast-in { from { opacity: 0; transform: translateY(-14px); } to { opacity: 1; transform: none; } }
+    @keyframes toast-out { to { opacity: 0; transform: translateX(30px); } }
+
     @media (max-width: 860px) {
       #login-screen { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
       .login-side { padding: 28px 24px 32px; }
@@ -185,6 +198,8 @@
     @media (max-width: 760px) {
       .topbar { padding: 14px 16px; }
       .topbar h2 { font-size: 23px; }
+      #notif-label { display: none; }
+      .notif-btn { padding: 7px 9px; }
       .content { padding: 16px 16px 40px; }
     }
 
@@ -192,6 +207,7 @@
   </style>
 </head>
 <body>
+  <div id="toasts" aria-live="polite"></div>
 
   <svg width="0" height="0" style="position: absolute;" aria-hidden="true">
     <symbol id="logo-mark" viewBox="0 0 40 40">
@@ -271,7 +287,10 @@
           <h2 id="view-title"></h2>
         </div>
         <div class="topbar-meta">
-          <span class="conn" id="conn-status">Tempo real: conectando…</span>
+          <button type="button" class="notif-btn" id="notif-btn" aria-label="Ativar notificações">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+            <span id="notif-label">Ativar notificações</span>
+          </button>
           <span class="muted" id="alert-pill" aria-live="polite"></span>
         </div>
       </div>
@@ -344,6 +363,8 @@
                 <div class="field"><label for="ns-unitw">Peso unitário (kg)</label><input id="ns-unitw" name="unitWeightKg" type="number" step="0.001" min="0.001" value="1.03" required></div>
                 <div class="field"><label for="ns-tol">Tolerância (%)</label><input id="ns-tol" name="tolerancePct" type="number" step="0.1" min="0" value="3" required></div>
                 <div class="field"><label for="ns-cap">Capacidade (unidades)</label><input id="ns-cap" name="capacityUnits" type="number" step="1" min="1" value="20" required></div>
+                <div class="field"><label for="ns-min">Avisar reposição com até (un)</label><input id="ns-min" name="minUnits" type="number" step="1" min="0" placeholder="Automático: metade"></div>
+                <div class="field"><label for="ns-crit">Crítico com até (un)</label><input id="ns-crit" name="criticalUnits" type="number" step="1" min="0" placeholder="Automático: um quarto"></div>
               </div>
               <button class="btn primary" type="submit" style="margin-top: 6px;">Adicionar prateleira</button>
             </form>
@@ -370,6 +391,7 @@
       <div class="row"><span>Ocupação</span><span id="modal-occ"></span></div>
       <div class="row"><span>Peso atual</span><span id="modal-weight"></span></div>
       <div class="row"><span>Peso unitário / tolerância</span><span id="modal-unitw"></span></div>
+      <div class="row"><span>Avisar / crítico com até</span><span id="modal-limits"></span></div>
       <div class="row"><span>Última leitura</span><span id="modal-updated"></span></div>
 
       <div id="modal-gerente-tools" class="hidden">
@@ -379,6 +401,8 @@
           <div class="field"><label for="edit-unitw">Peso unitário (kg)</label><input id="edit-unitw" type="number" step="0.001"></div>
           <div class="field"><label for="edit-tol">Tolerância (%)</label><input id="edit-tol" type="number" step="0.1"></div>
           <div class="field"><label for="edit-cap">Capacidade</label><input id="edit-cap" type="number" step="1"></div>
+          <div class="field"><label for="edit-min">Avisar reposição com até (un)</label><input id="edit-min" type="number" step="1" min="0" placeholder="Automático: metade"></div>
+          <div class="field"><label for="edit-crit">Crítico com até (un)</label><input id="edit-crit" type="number" step="1" min="0" placeholder="Automático: um quarto"></div>
           <div class="field"><label for="edit-weight">Peso atual para teste manual (kg)</label><input id="edit-weight" type="number" step="0.01"></div>
         </div>
         <div class="actions">
@@ -422,7 +446,7 @@
       'network-request-failed': 'Sem conexão com o servidor de login.',
       'user-disabled': 'Este usuário está desativado.'
     };
-    const EDIT_FIELDS = { name: 'edit-name', productType: 'edit-type', unitWeightKg: 'edit-unitw', tolerancePct: 'edit-tol', capacityUnits: 'edit-cap' };
+    const EDIT_FIELDS = { name: 'edit-name', productType: 'edit-type', unitWeightKg: 'edit-unitw', tolerancePct: 'edit-tol', capacityUnits: 'edit-cap', minUnits: 'edit-min', criticalUnits: 'edit-crit' };
 
     // ---------- estado ----------
     const shelvesCache = new Map();
@@ -431,6 +455,8 @@
     let historyCache = [];
     let movementsCache = [];
     let unsubscribers = [];
+    let lastAlertState = null;
+    let swRegistration = null;
 
     // ---------- utilidades ----------
     const $ = (id) => document.getElementById(id);
@@ -454,8 +480,16 @@
       const units = unitW > 0 ? Math.max(0, Math.round(w / unitW)) : 0;
       const anomaly = unitW > 0 && Math.abs(w - units * unitW) > unitW * tol && w > unitW * tol;
       const occupancyPct = cap > 0 ? Math.min(1, units / cap) : 0;
-      const stockStatus = occupancyPct <= 0.25 ? 'critico' : occupancyPct <= 0.5 ? 'aviso' : 'ok';
-      return { units, occupancyPct, stockStatus, anomaly };
+      const { warnAt, critAt } = stockLimits(shelf);
+      const stockStatus = units <= critAt ? 'critico' : units <= warnAt ? 'aviso' : 'ok';
+      return { units, occupancyPct, stockStatus, anomaly, warnAt, critAt };
+    }
+
+    function stockLimits(shelf) {
+      const cap = Number(shelf.capacityUnits) || 0;
+      const warnAt = Number.isFinite(shelf.minUnits) ? shelf.minUnits : Math.floor(cap * 0.5);
+      const critAt = Number.isFinite(shelf.criticalUnits) ? shelf.criticalUnits : Math.floor(cap * 0.25);
+      return { warnAt, critAt };
     }
 
     function shelfFields(read) {
@@ -464,8 +498,21 @@
         productType: read('productType').trim(),
         unitWeightKg: Number(read('unitWeightKg')),
         toleranceFraction: Number(read('tolerancePct')) / 100,
-        capacityUnits: Number(read('capacityUnits'))
+        capacityUnits: Number(read('capacityUnits')),
+        minUnits: optionalInt(read('minUnits')),
+        criticalUnits: optionalInt(read('criticalUnits'))
       };
+    }
+
+    function optionalInt(value) {
+      return String(value).trim() === '' ? null : Math.max(0, Math.round(Number(value)));
+    }
+
+    function limitsError(fields) {
+      const { minUnits, criticalUnits, capacityUnits } = fields;
+      if (minUnits !== null && minUnits >= capacityUnits) return 'O aviso de reposição precisa ser menor que a capacidade.';
+      if (minUnits !== null && criticalUnits !== null && criticalUnits > minUnits) return 'O nível crítico não pode ser maior que o nível de aviso.';
+      return null;
     }
 
     async function withButton(btn, errorMsg, action) {
@@ -581,6 +628,7 @@
       historyCache = [];
       movementsCache = [];
       currentRole = null;
+      lastAlertState = null;
     }
 
     // ---------- navegação ----------
@@ -628,6 +676,7 @@
             shelvesCache.set(id, { ...shelf, derived });
             syncStatus(shelf, derived);
           });
+          checkAlertChanges();
           renderShelves();
           renderAlerts();
           renderAdminList();
@@ -637,13 +686,7 @@
         }, (err) => console.error('Falha ao ler prateleiras', err)),
 
         listenLog('history', 200, (list) => { historyCache = list; renderHistory(); }),
-        listenLog('movements', 500, (list) => { movementsCache = list; renderMovements(); }),
-
-        onValue(ref(db, '.info/connected'), (snap) => {
-          const online = snap.val() === true;
-          $('conn-status').textContent = online ? 'Tempo real: conectado' : 'Tempo real: reconectando…';
-          $('conn-status').classList.toggle('offline', !online);
-        })
+        listenLog('movements', 500, (list) => { movementsCache = list; renderMovements(); })
       ];
     }
 
@@ -690,6 +733,92 @@
         ...fields
       }).catch((e) => console.error(`Falha ao registrar em ${path}`, e));
     }
+
+    // ---------- notificações ----------
+    const NOTIFY = {
+      aviso: { icon: '!', tone: 'aviso', title: (s) => `Hora de repor: ${s.name}`, body: (s) => `Restam ${s.derived.units} de ${s.capacityUnits} unidades.` },
+      critico: { icon: '!!', tone: 'critico', title: (s) => `Reposição crítica: ${s.name}`, body: (s) => `Só restam ${s.derived.units} de ${s.capacityUnits} unidades. Reponha agora.` },
+      anom: { icon: '?', tone: 'anom', title: (s) => `Produto estranho em ${s.name}`, body: (s) => `O peso não fecha com unidades de ${s.productType || 'produto'}. Confira a prateleira.` }
+    };
+
+    function checkAlertChanges() {
+      const current = new Map([...shelvesCache.values()].map((s) => [s.id, { status: s.derived.stockStatus, anomaly: s.derived.anomaly }]));
+      if (lastAlertState) {
+        current.forEach((now, id) => {
+          const before = lastAlertState.get(id);
+          if (!before) return;
+          const shelf = shelvesCache.get(id);
+          const worse = { ok: 0, aviso: 1, critico: 2 };
+          if (worse[now.status] > worse[before.status]) notify(shelf, now.status);
+          if (now.anomaly && !before.anomaly) notify(shelf, 'anom');
+        });
+      }
+      lastAlertState = current;
+    }
+
+    function notify(shelf, kind) {
+      const cfg = NOTIFY[kind];
+      const title = cfg.title(shelf);
+      const body = cfg.body(shelf);
+      showToast(shelf.id, cfg, title, body);
+      if (document.hidden && 'Notification' in window && Notification.permission === 'granted') {
+        const options = { body, icon: 'icon-192.png', badge: 'icon-192.png', tag: `${shelf.id}-${kind}`, renotify: true, data: { shelfId: shelf.id } };
+        if (swRegistration) swRegistration.showNotification(title, options).catch(() => {});
+        else { try { new Notification(title, options).onclick = () => { window.focus(); openModal(shelf.id); }; } catch (e) { console.warn(e); } }
+      }
+    }
+
+    function showToast(shelfId, cfg, title, body) {
+      const el = document.createElement('div');
+      el.className = `toast ${cfg.tone}`;
+      el.setAttribute('role', 'status');
+      el.innerHTML = `
+        <div class="toast-icon">${cfg.icon}</div>
+        <div>
+          <div class="toast-app"><span>Painel de Reposição</span><span>agora</span></div>
+          <div class="toast-title">${escapeHtml(title)}</div>
+          <div class="toast-body">${escapeHtml(body)}</div>
+        </div>
+        <button type="button" class="toast-close" aria-label="Dispensar">&times;</button>`;
+      const dismiss = () => { el.classList.add('leaving'); setTimeout(() => el.remove(), 220); };
+      el.addEventListener('click', (e) => {
+        if (shelfId && !e.target.closest('.toast-close')) openModal(shelfId);
+        dismiss();
+      });
+      $('toasts').prepend(el);
+      while ($('toasts').children.length > 4) $('toasts').lastElementChild.remove();
+      setTimeout(dismiss, 9000);
+    }
+
+    function renderNotifButton() {
+      const supported = 'Notification' in window;
+      const granted = supported && Notification.permission === 'granted';
+      $('notif-btn').classList.toggle('on', granted);
+      $('notif-label').textContent = !supported ? 'Avisos na tela' : granted ? 'Notificações ativas'
+        : Notification.permission === 'denied' ? 'Notificações bloqueadas' : 'Ativar notificações';
+    }
+
+    on('notif-btn', 'click', async () => {
+      if (!('Notification' in window)) {
+        alert('Este navegador não aceita notificações do sistema. Os avisos continuam aparecendo na tela do painel.');
+        return;
+      }
+      if (Notification.permission === 'denied') {
+        alert('As notificações estão bloqueadas para este site. Libere nas configurações do navegador (ícone ao lado do endereço).');
+        return;
+      }
+      if (Notification.permission === 'default') await Notification.requestPermission();
+      renderNotifButton();
+      if (Notification.permission === 'granted') {
+        showToast(null, NOTIFY.aviso, 'Notificações ativadas', 'Você será avisado quando um produto precisar de reposição.');
+      }
+    });
+
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js').then((reg) => { swRegistration = reg; }).catch(() => {});
+      navigator.serviceWorker.addEventListener('message', (e) => { if (e.data?.shelfId) openModal(e.data.shelfId); });
+    }
+    renderNotifButton();
 
     // ---------- telas ----------
     function renderShelves() {
@@ -791,9 +920,12 @@
     on('new-shelf-form', 'submit', (e) => {
       e.preventDefault();
       const form = e.target;
+      const fields = shelfFields((key) => form.elements[key].value);
+      const problem = limitsError(fields);
+      if (problem) return alert(problem);
       withButton(form.querySelector('[type="submit"]'), 'Não foi possível criar a prateleira. Confira suas permissões.', async () => {
         await set(push(ref(db, 'shelves')), {
-          ...shelfFields((key) => form.elements[key].value),
+          ...fields,
           currentWeightKg: 0,
           updatedAt: serverTimestamp()
         });
@@ -832,6 +964,7 @@
       $('modal-occ').textContent = fmtPct(d.occupancyPct);
       $('modal-weight').textContent = fmtKg(s.currentWeightKg);
       $('modal-unitw').textContent = `${s.unitWeightKg} kg ± ${Math.round((s.toleranceFraction || 0) * 100)}%`;
+      $('modal-limits').textContent = `${d.warnAt} / ${d.critAt} unidades`;
       $('modal-updated').textContent = fmtWhen(s.updatedAt);
     }
 
@@ -845,9 +978,12 @@
 
     on('btn-save-shelf', 'click', (e) => {
       if (!activeShelfId) return;
+      const fields = shelfFields((key) => $(EDIT_FIELDS[key]).value);
+      const problem = limitsError(fields);
+      if (problem) return alert(problem);
       withButton(e.currentTarget, 'Não foi possível salvar. Confira suas permissões.', () =>
         update(ref(db, 'shelves/' + activeShelfId), {
-          ...shelfFields((key) => $(EDIT_FIELDS[key]).value),
+          ...fields,
           currentWeightKg: Number($('edit-weight').value),
           updatedAt: serverTimestamp()
         }));
