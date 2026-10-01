@@ -4,171 +4,256 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Painel de Reposição</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20viewBox%3D%270%200%2040%2040%27%3E%3Crect%20width%3D%2740%27%20height%3D%2740%27%20rx%3D%277%27%20fill%3D%27%231F3A2E%27/%3E%3Crect%20x%3D%278%27%20y%3D%2717%27%20width%3D%276.5%27%20height%3D%2711%27%20rx%3D%271%27%20fill%3D%27%23F2C230%27/%3E%3Crect%20x%3D%2716.75%27%20y%3D%2712%27%20width%3D%276.5%27%20height%3D%2716%27%20rx%3D%271%27%20fill%3D%27%23F2C230%27/%3E%3Cpath%20d%3D%27M28.75%2025V16.5M26%2019.2l2.75-2.8%202.75%202.8%27%20fill%3D%27none%27%20stroke%3D%27%23fff%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27/%3E%3Crect%20x%3D%276%27%20y%3D%2729%27%20width%3D%2728%27%20height%3D%273%27%20rx%3D%271.5%27%20fill%3D%27%23fff%27/%3E%3C/svg%3E">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg: #F1F2F4; --surface: #FFFFFF; --ink: #1C2024; --ink-soft: #5B6169; --line: #DADDE1;
-      --accent: #2B5FD9; --accent-hover: #254FB8; --track: #E7E9EC;
-      --ok: #1F8A4C;   --ok-bg: #E7F5EC;
-      --warn: #B5720B; --warn-bg: #FBF0DC;
-      --crit: #C23B3B; --crit-bg: #FBE7E7;
-      --anom: #7A4FC7; --anom-bg: #F1EAFB;
-      --radius: 10px;
-      --font-d: 'Barlow Condensed', sans-serif;
-      --font-b: 'Inter', sans-serif;
+      --shelf: #E4E6E1; --paper: #FFFFFF; --rail: #C9CDC5; --rail-dark: #8F968C;
+      --ink: #1F2A24; --ink-soft: #5E6A62; --line: #D3D7CF;
+      --sign: #1F3A2E; --sign-hover: #2A4A3B; --sign-ink: #DCE5DF;
+      --tag: #F2C230; --tag-hover: #E2AF16;
+      --ok: #2E7D4F;   --ok-bg: #E3F1E8;
+      --warn: #C27014; --warn-bg: #FCEFD9;
+      --crit: #C8352E; --crit-bg: #FBE5E3;
+      --anom: #6D4BB0; --anom-bg: #EEE8F8;
+      --font: 'Inter', system-ui, sans-serif;
+      --font-d: 'Lexend', 'Inter', sans-serif;
     }
 
     /* ---------- base ---------- */
     * { box-sizing: border-box; }
     html, body { height: 100%; margin: 0; }
-    body { font-family: var(--font-b); background: var(--bg); color: var(--ink); -webkit-font-smoothing: antialiased; }
-    button, input, select { font-family: inherit; }
+    body { font-family: var(--font); background: var(--shelf); color: var(--ink); font-size: 15px; line-height: 1.45; -webkit-font-smoothing: antialiased; }
+    button, input, select { font-family: inherit; color: inherit; }
     button { cursor: pointer; }
-    button:disabled { opacity: .6; cursor: default; }
-    :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-    h1, h2, h3 { font-family: var(--font-d); font-weight: 700; margin: 0; letter-spacing: .2px; }
+    button:disabled { opacity: .55; cursor: default; }
+    :focus-visible { outline: 3px solid var(--tag); outline-offset: 2px; }
+    h1, h2, h3 { font-family: var(--font-d); font-weight: 600; margin: 0; letter-spacing: -.3px; }
     .hidden { display: none !important; }
     .muted { color: var(--ink-soft); }
-    .small { font-size: 12.5px; }
+    .small { font-size: 13px; }
 
-    /* cores por status: definem --c / --cb, herdadas por badge, dot, slot e barra */
-    .ok, .entrada  { --c: var(--ok);   --cb: var(--ok-bg); }
-    .aviso         { --c: var(--warn); --cb: var(--warn-bg); }
+    .ok, .entrada    { --c: var(--ok);   --cb: var(--ok-bg); }
+    .aviso           { --c: var(--warn); --cb: var(--warn-bg); }
     .critico, .saida { --c: var(--crit); --cb: var(--crit-bg); }
-    .anom          { --c: var(--anom); --cb: var(--anom-bg); }
-    .badge { font-size: 11.5px; font-weight: 600; padding: 3px 8px; border-radius: 100px; background: var(--cb); color: var(--c); }
-    .tone { color: var(--c); font-weight: 600; }
+    .anom            { --c: var(--anom); --cb: var(--anom-bg); }
+    .badge { display: inline-block; font-size: 12.5px; font-weight: 600; padding: 2px 7px; border-radius: 3px; background: var(--cb); color: var(--c); }
+    .tone { color: var(--c); font-weight: 700; }
 
     /* ---------- campos e botões ---------- */
     .field { margin-bottom: 16px; }
-    .field label { display: block; font-size: 13px; color: var(--ink-soft); margin-bottom: 6px; }
-    .field input { width: 100%; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; font-size: 15px; background: #fff; color: var(--ink); }
-    .field input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
-    .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; }
-    .btn { padding: 9px 16px; border-radius: 8px; border: 1px solid var(--line); background: #fff; font-size: 14px; font-weight: 600; color: var(--ink); }
-    .btn:hover:not(:disabled) { background: #F4F5F6; }
-    .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
-    .btn.primary:hover:not(:disabled) { background: var(--accent-hover); }
-    .btn.danger { color: var(--crit); border-color: #F0C9C9; }
+    .field label { display: block; font-size: 13.5px; font-weight: 600; margin-bottom: 6px; }
+    .field input { width: 100%; padding: 10px 12px; border: 1px solid var(--rail-dark); border-radius: 4px; font-size: 15px; background: var(--paper); }
+    .field input:focus { outline: 3px solid var(--tag); outline-offset: 0; border-color: var(--ink); }
+    .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 4px 14px; }
+    .btn { padding: 9px 16px; border-radius: 4px; border: 1px solid var(--rail-dark); background: var(--paper); font-size: 14.5px; font-weight: 600; }
+    .btn:hover:not(:disabled) { background: var(--shelf); }
+    .btn.primary { background: var(--tag); border-color: var(--tag); color: var(--ink); font-weight: 700; }
+    .btn.primary:hover:not(:disabled) { background: var(--tag-hover); border-color: var(--tag-hover); }
+    .btn.danger { color: var(--crit); border-color: var(--crit); }
     .btn.danger:hover:not(:disabled) { background: var(--crit-bg); }
-    .btn.block { width: 100%; padding: 11px; font-size: 15px; }
+    .btn.block { width: 100%; padding: 12px; font-size: 16px; }
 
     /* ---------- login ---------- */
-    #login-screen { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; }
-    .login-card { width: 100%; max-width: 360px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 32px 28px; }
-    .login-card h1 { font-size: 30px; line-height: 1.1; margin-bottom: 4px; }
-    .login-card .sub { font-size: 14px; margin: 0 0 24px; }
-    #login-error { color: var(--crit); font-size: 13px; margin-top: 10px; min-height: 16px; }
+    #login-screen { min-height: 100vh; display: grid; grid-template-columns: minmax(360px, 36%) 1fr; }
+    .login-side { position: relative; overflow: hidden; background: var(--sign); color: #fff; padding: 56px 64px; display: flex; flex-direction: column; }
+    .login-brand { display: flex; align-items: center; gap: 14px; }
+    .login-brand-name { padding-left: 14px; border-left: 1px solid #4E6B5D; font-size: 13px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--tag); }
+    .login-pitch { margin: auto 0; position: relative; z-index: 1; }
+    .login-pitch::before { content: ""; display: block; width: 56px; height: 4px; background: var(--tag); margin-bottom: 30px; }
+    .login-pitch h1 { font-size: clamp(30px, 2.6vw, 40px); line-height: 1.08; color: #fff; }
+    .login-pitch h1 span { display: block; color: var(--tag); }
+    .login-pitch p { margin: 22px 0 0; max-width: 330px; color: var(--sign-ink); font-size: 15.5px; line-height: 1.6; }
+    .login-foot { position: relative; z-index: 1; font-size: 12px; font-weight: 600; letter-spacing: 2.2px; text-transform: uppercase; color: #8FA89A; }
+    .login-watermark { position: absolute; right: -90px; bottom: -70px; width: 360px; height: 360px; opacity: .09; }
+    .login-main { display: flex; align-items: center; justify-content: center; padding: 40px 24px; background: #F3F4F1; }
+    .login-card { width: 100%; max-width: 410px; }
+    .login-card h2 { font-size: 27px; margin-bottom: 6px; }
+    .login-card .sub { margin: 0 0 30px; }
+    .login-card .field label { font-size: 12px; font-weight: 700; letter-spacing: 1.4px; text-transform: uppercase; color: var(--ink-soft); }
+    .login-card .field input { padding: 13px 14px; background: #fff; border-color: #C3C9C0; border-radius: 5px; }
+    .label-row { display: flex; justify-content: space-between; align-items: baseline; }
+    .link-btn { background: none; border: none; padding: 0; font-size: 13px; color: var(--ink); text-decoration: underline; text-underline-offset: 3px; }
+    .link-btn:hover { color: var(--sign); }
+    .pass-wrap { display: flex; }
+    .pass-wrap input { border-radius: 5px 0 0 5px !important; }
+    .pass-toggle { width: 50px; flex-shrink: 0; display: grid; place-items: center; background: #fff; border: 1px solid #C3C9C0; border-left: none; border-radius: 0 5px 5px 0; color: var(--ink-soft); }
+    .pass-toggle:hover { color: var(--ink); background: var(--shelf); }
+    .pass-toggle svg { width: 20px; height: 20px; }
+    .login-card .btn.block { margin-top: 10px; padding: 14px; background: var(--sign); border-color: var(--sign); color: #fff; }
+    .login-card .btn.block:hover:not(:disabled) { background: var(--sign-hover); border-color: var(--sign-hover); }
+    #login-error { color: var(--crit); font-size: 13.5px; margin-top: 12px; min-height: 18px; }
+    #login-error.info { color: var(--ok); }
+    .login-logo { width: 44px; height: 44px; display: block; }
 
     /* ---------- estrutura ---------- */
-    #app { display: flex; min-height: 100vh; }
-    .sidebar { width: 210px; flex-shrink: 0; background: var(--ink); color: #fff; padding: 22px 14px; display: flex; flex-direction: column; }
-    .brand { font-family: var(--font-d); font-size: 22px; font-weight: 700; padding: 0 8px 22px; }
-    .brand span { color: #8FB0FF; }
-    .nav-btn { display: block; width: 100%; text-align: left; background: none; border: none; color: #C7CBD1; font-size: 15px; padding: 10px; border-radius: 8px; margin-bottom: 2px; }
-    .nav-btn:hover { background: #262A31; color: #fff; }
-    .nav-btn.active { background: #2A2F37; color: #fff; }
+    #app { min-height: 100vh; }
+    .sidebar { position: fixed; top: 0; bottom: 0; left: 0; z-index: 60; width: 270px; max-width: 85vw; background: var(--sign); color: #fff; padding: 18px 0 22px; display: flex; flex-direction: column; transform: translateX(-100%); visibility: hidden; transition: transform .22s ease, visibility .22s; }
+    .sidebar.open { transform: none; visibility: visible; }
+    #drawer-backdrop { position: fixed; inset: 0; z-index: 55; background: rgba(31, 42, 36, .45); }
+    .drawer-head { display: flex; align-items: center; justify-content: space-between; padding: 0 12px 22px 20px; }
+    .drawer-close { background: none; border: none; color: var(--sign-ink); font-size: 28px; line-height: 1; padding: 4px 8px; }
+    .drawer-close:hover { color: #fff; }
+    .menu-btn { display: inline-flex; flex-direction: column; justify-content: center; gap: 5px; width: 42px; height: 42px; padding: 0 10px; background: none; border: 1px solid var(--line); border-radius: 4px; flex-shrink: 0; }
+    .menu-btn span { display: block; height: 2.5px; border-radius: 2px; background: var(--ink); }
+    .menu-btn:hover { background: var(--shelf); }
+    .topbar-title { display: flex; align-items: center; gap: 14px; min-width: 0; }
+    .brand { display: flex; align-items: center; }
+    .logo { width: 42px; height: 42px; flex-shrink: 0; }
+    .nav-btn { display: block; width: 100%; text-align: left; background: none; border: none; border-left: 4px solid transparent; color: var(--sign-ink); font-size: 15px; padding: 11px 16px; }
+    .nav-btn:hover { background: var(--sign-hover); color: #fff; }
+    .nav-btn.active { border-left-color: var(--tag); background: var(--sign-hover); color: #fff; font-weight: 700; }
     .spacer { flex: 1; }
-    .who { font-size: 12px; color: #8B9099; padding: 0 10px 8px; line-height: 1.5; white-space: pre-line; }
-    .btn-logout { background: none; border: 1px solid #3A3F47; color: #C7CBD1; border-radius: 8px; padding: 8px 10px; font-size: 13px; width: 100%; }
-    .btn-logout:hover { border-color: var(--ink-soft); color: #fff; }
+    .who { font-size: 13px; color: var(--sign-ink); opacity: .8; padding: 0 20px 10px; white-space: pre-line; }
+    .btn-logout { margin: 0 20px; background: none; border: 1px solid #4E6B5D; color: var(--sign-ink); border-radius: 4px; padding: 8px 10px; font-size: 13.5px; }
+    .btn-logout:hover { border-color: var(--sign-ink); color: #fff; }
 
-    .main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
-    .topbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 18px 28px; border-bottom: 1px solid var(--line); background: var(--surface); }
-    .topbar h2 { font-size: 26px; }
-    .topbar-meta { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; justify-content: flex-end; font-size: 14px; }
-    .conn { --c: var(--ok); font-size: 12.5px; color: var(--c); display: inline-flex; align-items: center; gap: 6px; }
+    .main { min-height: 100vh; display: flex; flex-direction: column; }
+    .topbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 20px 32px 16px; background: var(--paper); border-bottom: 1px solid var(--line); }
+    .topbar h2 { font-size: 28px; }
+    .topbar-meta { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; justify-content: flex-end; font-size: 14px; }
+    .conn { --c: var(--ok); font-size: 13px; color: var(--c); display: inline-flex; align-items: center; gap: 7px; }
     .conn::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
     .conn.offline { --c: var(--warn); }
-    .content { padding: 24px 28px 48px; flex: 1; }
-    .count-label { display: block; font-size: 14px; margin-bottom: 18px; }
-    .empty-state { border: 1px dashed var(--line); border-radius: var(--radius); padding: 40px 20px; text-align: center; color: var(--ink-soft); }
-    .panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 20px; margin-bottom: 20px; }
-    .panel h3 { font-size: 19px; margin-bottom: 14px; }
+    .content { padding: 24px 32px 48px; flex: 1; }
+    .count-label { display: block; font-size: 14px; margin-bottom: 16px; }
+    .empty-state { border: 2px dashed var(--rail); border-radius: 6px; padding: 40px 20px; text-align: center; color: var(--ink-soft); }
+    .panel { background: var(--paper); border-radius: 6px; padding: 22px; margin-bottom: 20px; }
+    .panel h3 { font-size: 19px; margin-bottom: 16px; }
 
-    /* ---------- cards de prateleira ---------- */
-    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 14px; }
-    .shelf-card { position: relative; width: 100%; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px 16px 14px 22px; overflow: hidden; text-align: left; display: flex; flex-direction: column; gap: 10px; }
-    .shelf-card::before { content: ""; position: absolute; inset: 0 auto 0 0; width: 5px; background: var(--c); }
-    .shelf-card .name { font-family: var(--font-d); font-size: 20px; font-weight: 600; }
-    .shelf-card .small { margin-top: -6px; }
-    .count-row { display: flex; align-items: baseline; gap: 6px; font-size: 14px; }
-    .count-row b { font-family: var(--font-d); font-size: 34px; line-height: 1; }
-    .slots { display: flex; gap: 2px; flex-wrap: wrap; }
-    .slot { flex: 1; min-width: 4px; height: 16px; border-radius: 2px; background: var(--track); }
-    .slot.filled, .fillbar > div { background: var(--c); }
-    .fillbar { height: 10px; border-radius: 5px; background: var(--track); overflow: hidden; }
-    .fillbar > div { height: 100%; }
-    .badges { display: flex; gap: 6px; flex-wrap: wrap; }
+    /* ---------- prateleiras: cada cartão é uma gôndola ---------- */
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 18px; }
+    .shelf-card { width: 100%; background: var(--paper); border: none; border-radius: 6px 6px 2px 2px; padding: 16px 16px 0; text-align: left; display: flex; flex-direction: column; }
+    .shelf-card:hover .shelf-edge { background: var(--tag-hover); }
+    .shelf-card .name { font-family: var(--font-d); font-size: 18px; font-weight: 600; line-height: 1.2; }
+    .shelf-card .small { margin-top: 2px; }
+    .slots { display: flex; gap: 3px; align-items: flex-end; height: 34px; margin-top: 16px; padding: 0 2px; }
+    .slot { flex: 1; min-width: 3px; height: 26px; border-radius: 2px 2px 0 0; border: 1.5px dashed var(--rail); border-bottom: none; }
+    .slot.filled { height: 32px; border: none; background: var(--c); }
+    .fillbar { height: 32px; margin-top: 16px; background: repeating-linear-gradient(90deg, var(--shelf) 0 10px, transparent 10px 13px); }
+    .fillbar > div { height: 100%; background: var(--c); }
+    .rail { height: 6px; background: var(--rail-dark); margin: 0 -16px; }
+    .shelf-edge { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 0 -16px; padding: 8px 16px 10px; background: var(--tag); border-radius: 0 0 2px 2px; }
+    .shelf-edge .qty { display: flex; align-items: baseline; gap: 6px; }
+    .shelf-edge .qty b { font-family: var(--font-d); font-size: 32px; font-weight: 700; line-height: 1; }
+    .shelf-edge .qty span { font-size: 13.5px; font-weight: 600; }
+    .shelf-edge .pct { font-size: 13.5px; font-weight: 600; text-align: right; }
+    .badges { display: flex; gap: 6px; flex-wrap: wrap; padding: 10px 0 14px; }
 
     /* ---------- listas e tabelas ---------- */
-    .list-row { display: flex; align-items: center; gap: 14px; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; margin-bottom: 8px; cursor: pointer; }
-    .list-row .dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; background: var(--c); }
+    .list-row { display: flex; align-items: center; gap: 14px; background: var(--paper); border-radius: 4px; padding: 13px 16px; margin-bottom: 6px; cursor: pointer; border-left: 6px solid var(--c); }
+    .list-row:hover { background: #FAFBF9; }
+    .list-row .dot { display: none; }
     .list-row .txt { flex: 1; min-width: 0; }
-    .list-row .txt span { display: block; font-size: 13px; color: var(--ink-soft); margin-top: 2px; }
+    .list-row .txt span { display: block; font-size: 13.5px; color: var(--ink-soft); margin-top: 2px; }
     .list-row .when { white-space: nowrap; }
     .filters { display: flex; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
-    .filters select { padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: #fff; font-size: 13.5px; }
-    .summary { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
-    .summary div { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 10px 14px; min-width: 120px; font-size: 12.5px; color: var(--ink-soft); }
-    .summary b { display: block; font-family: var(--font-d); font-size: 24px; line-height: 1.1; color: var(--c, var(--ink)); }
-    .table-wrap { overflow-x: auto; border-radius: var(--radius); }
-    table { width: 100%; border-collapse: collapse; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
-    th { text-align: left; font-size: 12px; color: var(--ink-soft); font-weight: 600; padding: 10px 14px; border-bottom: 1px solid var(--line); background: #FAFAFB; }
-    td { padding: 10px 14px; border-bottom: 1px solid var(--line); font-size: 14px; }
+    .filters select { padding: 8px 10px; border: 1px solid var(--rail-dark); border-radius: 4px; background: var(--paper); font-size: 14px; }
+    .summary { display: flex; gap: 24px; flex-wrap: wrap; margin-bottom: 16px; font-size: 13.5px; color: var(--ink-soft); }
+    .summary b { display: block; font-family: var(--font-d); font-size: 28px; font-weight: 600; line-height: 1.15; color: var(--c, var(--ink)); }
+    .table-wrap { overflow-x: auto; background: var(--paper); border-radius: 6px; }
+    table { width: 100%; border-collapse: collapse; }
+    th { text-align: left; font-size: 13px; font-weight: 700; padding: 11px 16px; border-bottom: 2px solid var(--ink); }
+    td { padding: 11px 16px; border-bottom: 1px solid var(--line); font-size: 14.5px; }
     tr:last-child td { border-bottom: none; }
 
     /* ---------- admin ---------- */
-    .admin-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+    .admin-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 0; border-bottom: 1px solid var(--line); }
     .admin-row:last-child { border-bottom: none; }
 
     /* ---------- modal ---------- */
-    #overlay { position: fixed; inset: 0; background: rgba(20, 22, 26, .5); display: flex; align-items: center; justify-content: center; padding: 20px; z-index: 50; }
-    .modal { width: 100%; max-width: 420px; background: var(--surface); border-radius: var(--radius); padding: 22px 22px 20px; max-height: 88vh; overflow: auto; }
-    .modal h3 { font-size: 22px; margin-bottom: 2px; }
-    .modal-sub { font-size: 13px; margin: 0 0 16px; }
-    .modal .row { display: flex; justify-content: space-between; gap: 10px; padding: 7px 0; border-bottom: 1px solid var(--line); font-size: 14px; }
+    #overlay { position: fixed; inset: 0; background: rgba(31, 42, 36, .55); display: flex; align-items: center; justify-content: center; padding: 20px; z-index: 50; }
+    .modal { width: 100%; max-width: 440px; background: var(--paper); border-radius: 6px; padding: 24px; max-height: 88vh; overflow: auto; }
+    .modal h3 { font-size: 23px; margin-bottom: 2px; }
+    .modal-sub { margin: 0 0 16px; }
+    .modal .row { display: flex; justify-content: space-between; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--line); font-size: 14.5px; }
     .modal .row span:first-child { color: var(--ink-soft); }
-    .modal-close { float: right; background: none; border: none; font-size: 24px; color: var(--ink-soft); line-height: 1; padding: 0 4px; }
-    .actions { display: flex; gap: 8px; margin-top: 16px; flex-wrap: wrap; }
+    .modal-close { float: right; background: none; border: none; font-size: 26px; color: var(--ink-soft); line-height: 1; padding: 0 4px; }
+    .actions { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+
+    @media (max-width: 860px) {
+      #login-screen { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
+      .login-side { padding: 28px 24px 32px; }
+      .login-pitch { margin: 34px 0 0; }
+      .login-pitch::before { margin-bottom: 18px; }
+      .login-pitch h1 { font-size: 30px; }
+      .login-pitch p, .login-foot, .login-watermark { display: none; }
+    }
 
     @media (max-width: 760px) {
-      #app { flex-direction: column; }
-      .sidebar { width: 100%; flex-direction: row; align-items: center; padding: 12px 14px; gap: 6px; overflow-x: auto; }
-      .brand { padding: 0 10px 0 0; }
-      .spacer, .who { display: none; }
-      .nav-btn, .btn-logout { width: auto; white-space: nowrap; margin-bottom: 0; }
       .topbar { padding: 14px 16px; }
+      .topbar h2 { font-size: 23px; }
       .content { padding: 16px 16px 40px; }
     }
+
+    @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
   </style>
 </head>
 <body>
 
+  <svg width="0" height="0" style="position: absolute;" aria-hidden="true">
+    <symbol id="logo-mark" viewBox="0 0 40 40">
+      <rect width="40" height="40" rx="7" fill="#1F3A2E"/>
+      <rect x="8" y="17" width="6.5" height="11" rx="1" fill="#F2C230"/>
+      <rect x="16.75" y="12" width="6.5" height="16" rx="1" fill="#F2C230"/>
+      <rect x="25.5" y="12" width="6.5" height="16" rx="1.6" fill="none" stroke="#DCE5DF" stroke-opacity=".6" stroke-width="1.4" stroke-dasharray="2.2 1.8"/>
+      <path d="M28.75 25 V16.5 M26 19.2 L28.75 16.4 L31.5 19.2" fill="none" stroke="#FFFFFF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+      <rect x="6" y="29" width="28" height="3" rx="1.5" fill="#FFFFFF"/>
+      <rect x="18" y="32" width="4" height="2.5" rx=".8" fill="#F2C230"/>
+    </symbol>
+  </svg>
+
   <!-- ===================== LOGIN ===================== -->
   <div id="login-screen">
-    <form class="login-card" id="login-form" novalidate>
-      <h1>Painel de Reposição</h1>
-      <p class="sub muted">Entre com sua conta para acompanhar as prateleiras.</p>
-      <div class="field">
-        <label for="login-email">E-mail</label>
-        <input id="login-email" type="email" autocomplete="username" required>
+    <aside class="login-side">
+      <div class="login-brand">
+        <svg class="login-logo" role="img" aria-label="Logo do Painel de Reposição"><use href="#logo-mark"/></svg>
+        <span class="login-brand-name">Reposição</span>
       </div>
-      <div class="field">
-        <label for="login-pass">Senha</label>
-        <input id="login-pass" type="password" autocomplete="current-password" required>
+      <div class="login-pitch">
+        <h1><span>Estoque na prateleira,</span>visto em tempo real.</h1>
+        <p>A balança mede, o painel conta os produtos e avisa a equipe quando é hora de repor.</p>
       </div>
-      <button class="btn primary block" id="login-btn" type="submit">Entrar</button>
-      <div id="login-error" role="alert" aria-live="polite"></div>
-    </form>
+      <div class="login-foot">Pesar · Contar · Repor</div>
+      <svg class="login-watermark" aria-hidden="true"><use href="#logo-mark"/></svg>
+    </aside>
+
+    <main class="login-main">
+      <form class="login-card" id="login-form" novalidate>
+        <h2>Acessar o painel</h2>
+        <p class="sub muted">Entre com o e-mail e a senha cadastrados pelo gerente.</p>
+        <div class="field">
+          <label for="login-email">E-mail</label>
+          <input id="login-email" type="email" autocomplete="username" required>
+        </div>
+        <div class="field">
+          <div class="label-row">
+            <label for="login-pass">Senha</label>
+            <button type="button" class="link-btn" id="forgot-btn">Esqueceu a senha?</button>
+          </div>
+          <div class="pass-wrap">
+            <input id="login-pass" type="password" autocomplete="current-password" required>
+            <button type="button" class="pass-toggle" id="pass-toggle" aria-label="Mostrar senha" aria-pressed="false">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
+        </div>
+        <button class="btn primary block" id="login-btn" type="submit">Entrar</button>
+        <div id="login-error" role="alert" aria-live="polite"></div>
+      </form>
+    </main>
   </div>
 
   <!-- ===================== APP ===================== -->
   <div id="app" class="hidden">
-    <nav class="sidebar" aria-label="Navegação principal">
-      <div class="brand">reposi<span>ção</span></div>
+    <div id="drawer-backdrop" class="hidden"></div>
+    <nav class="sidebar" id="sidebar" aria-label="Navegação principal">
+      <div class="drawer-head">
+        <div class="brand"><svg class="logo" role="img" aria-label="Painel de Reposição"><use href="#logo-mark"/></svg></div>
+        <button type="button" class="drawer-close" id="menu-close" aria-label="Fechar menu">&times;</button>
+      </div>
       <button type="button" class="nav-btn" data-view="shelves">Prateleiras</button>
       <button type="button" class="nav-btn" data-view="alerts">Alertas</button>
       <button type="button" class="nav-btn" data-view="movements">Movimentações</button>
@@ -181,7 +266,10 @@
 
     <main class="main">
       <div class="topbar">
-        <h2 id="view-title"></h2>
+        <div class="topbar-title">
+          <button type="button" class="menu-btn" id="menu-btn" aria-label="Abrir menu" aria-controls="sidebar" aria-expanded="false"><span></span><span></span><span></span></button>
+          <h2 id="view-title"></h2>
+        </div>
         <div class="topbar-meta">
           <span class="conn" id="conn-status">Tempo real: conectando…</span>
           <span class="muted" id="alert-pill" aria-live="polite"></span>
@@ -257,7 +345,7 @@
                 <div class="field"><label for="ns-tol">Tolerância (%)</label><input id="ns-tol" name="tolerancePct" type="number" step="0.1" min="0" value="3" required></div>
                 <div class="field"><label for="ns-cap">Capacidade (unidades)</label><input id="ns-cap" name="capacityUnits" type="number" step="1" min="1" value="20" required></div>
               </div>
-              <button class="btn primary" type="submit">Adicionar prateleira</button>
+              <button class="btn primary" type="submit" style="margin-top: 6px;">Adicionar prateleira</button>
             </form>
           </div>
           <div class="panel">
@@ -291,7 +379,7 @@
           <div class="field"><label for="edit-unitw">Peso unitário (kg)</label><input id="edit-unitw" type="number" step="0.001"></div>
           <div class="field"><label for="edit-tol">Tolerância (%)</label><input id="edit-tol" type="number" step="0.1"></div>
           <div class="field"><label for="edit-cap">Capacidade</label><input id="edit-cap" type="number" step="1"></div>
-          <div class="field"><label for="edit-weight">Peso atual — teste manual (kg)</label><input id="edit-weight" type="number" step="0.01"></div>
+          <div class="field"><label for="edit-weight">Peso atual para teste manual (kg)</label><input id="edit-weight" type="number" step="0.01"></div>
         </div>
         <div class="actions">
           <button type="button" class="btn primary" id="btn-save-shelf">Salvar alterações</button>
@@ -303,7 +391,7 @@
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
-    import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
+    import { getAuth, signInWithEmailAndPassword, sendPasswordResetEmail, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
     import {
       getDatabase, ref, push, set, update, remove, get, onValue,
       query, orderByChild, limitToLast, serverTimestamp, runTransaction
@@ -413,6 +501,7 @@
       const email = $('login-email').value.trim();
       const pass = $('login-pass').value;
       const btn = $('login-btn');
+      $('login-error').classList.remove('info');
       $('login-error').textContent = email && pass ? '' : 'Preencha e-mail e senha.';
       if (!email || !pass) return;
 
@@ -429,6 +518,32 @@
       } finally {
         btn.disabled = false;
         btn.textContent = 'Entrar';
+      }
+    });
+
+    on('pass-toggle', 'click', (e) => {
+      const show = $('login-pass').type === 'password';
+      $('login-pass').type = show ? 'text' : 'password';
+      e.currentTarget.setAttribute('aria-pressed', String(show));
+      e.currentTarget.setAttribute('aria-label', show ? 'Ocultar senha' : 'Mostrar senha');
+    });
+
+    on('forgot-btn', 'click', async () => {
+      const email = $('login-email').value.trim();
+      const msg = $('login-error');
+      msg.classList.remove('info');
+      if (!email) {
+        msg.textContent = 'Digite seu e-mail acima para receber o link de nova senha.';
+        $('login-email').focus();
+        return;
+      }
+      try {
+        await sendPasswordResetEmail(auth, email);
+        msg.classList.add('info');
+        msg.textContent = 'Se esse e-mail estiver cadastrado, enviamos um link para criar uma nova senha. Confira também o spam.';
+      } catch (err) {
+        const code = (err?.code || '').replace('auth/', '');
+        msg.textContent = LOGIN_ERRORS[code] || 'Não foi possível enviar o e-mail agora. Tente de novo em instantes.';
       }
     });
 
@@ -471,7 +586,19 @@
     // ---------- navegação ----------
     document.querySelectorAll('.nav-btn').forEach((btn) => btn.addEventListener('click', () => showView(btn.dataset.view)));
 
+    function setMenu(open) {
+      $('sidebar').classList.toggle('open', open);
+      toggle('drawer-backdrop', open);
+      $('menu-btn').setAttribute('aria-expanded', String(open));
+      if (open) $('menu-close').focus();
+    }
+
+    on('menu-btn', 'click', () => setMenu(true));
+    on('menu-close', 'click', () => setMenu(false));
+    on('drawer-backdrop', 'click', () => setMenu(false));
+
     function showView(name) {
+      setMenu(false);
       document.querySelectorAll('.nav-btn').forEach((b) => b.classList.toggle('active', b.dataset.view === name));
       document.querySelectorAll('.content > section').forEach((sec) => sec.classList.toggle('hidden', sec.id !== 'view-' + name));
       $('view-title').textContent = $('view-' + name).dataset.title;
@@ -585,8 +712,12 @@
         <button type="button" class="shelf-card ${d.stockStatus}" data-open="${escapeHtml(s.id)}">
           <div class="name">${escapeHtml(s.name || '—')}</div>
           <div class="small muted">${escapeHtml(s.productType || '')}</div>
-          <div class="count-row"><b>${d.units}</b><span class="muted">/ ${cap} un · ${fmtPct(d.occupancyPct)}</span></div>
           ${fill}
+          <div class="rail"></div>
+          <div class="shelf-edge">
+            <div class="qty"><b>${d.units}</b><span>de ${cap} un</span></div>
+            <div class="pct">${fmtPct(d.occupancyPct)} cheia</div>
+          </div>
           <div class="badges">${statusBadges(d)}</div>
         </button>`;
     }
@@ -596,14 +727,14 @@
       $('alerts-list').innerHTML = list.length ? list.map((s) => {
         const d = s.derived;
         const label = d.anomaly
-          ? 'Produto estranho — peso não bate com unidades de ' + escapeHtml(s.productType || 'produto')
+          ? 'Produto estranho: o peso não fecha com unidades de ' + escapeHtml(s.productType || 'produto')
           : STATUS_LABEL[d.stockStatus];
         return `
-          <div class="list-row" data-open="${escapeHtml(s.id)}">
+          <div class="list-row ${d.anomaly ? 'anom' : d.stockStatus}" data-open="${escapeHtml(s.id)}">
             <div class="dot ${d.anomaly ? 'anom' : d.stockStatus}"></div>
             <div class="txt">
               <strong>${escapeHtml(s.name || '—')}</strong>
-              <span>${label} · ${d.units}/${escapeHtml(s.capacityUnits ?? 0)} un (${fmtPct(d.occupancyPct)})</span>
+              <span>${label}. ${d.units} de ${escapeHtml(s.capacityUnits ?? 0)} unidades (${fmtPct(d.occupancyPct)})</span>
             </div>
             <div class="when small muted">${fmtWhen(s.updatedAt)}</div>
           </div>`;
@@ -651,7 +782,7 @@
         <div class="admin-row">
           <div>
             <strong>${escapeHtml(s.name || '—')}</strong>
-            <div class="small muted">${escapeHtml(s.productType || '')} · ${escapeHtml(s.unitWeightKg)} kg/un · cap. ${escapeHtml(s.capacityUnits)}</div>
+            <div class="small muted">${escapeHtml(s.productType || '')}, ${escapeHtml(s.unitWeightKg)} kg por unidade, cabem ${escapeHtml(s.capacityUnits)}</div>
           </div>
           <button type="button" class="btn" data-open="${escapeHtml(s.id)}">Abrir</button>
         </div>`).join('') : '<p class="muted">Nenhuma prateleira ainda.</p>';
@@ -706,7 +837,11 @@
 
     on('modal-close', 'click', closeModal);
     on('overlay', 'click', (e) => { if (e.target.id === 'overlay') closeModal(); });
-    document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && activeShelfId) closeModal(); });
+    document.addEventListener('keydown', (e) => {
+      if (e.key !== 'Escape') return;
+      if (activeShelfId) closeModal();
+      else setMenu(false);
+    });
 
     on('btn-save-shelf', 'click', (e) => {
       if (!activeShelfId) return;
